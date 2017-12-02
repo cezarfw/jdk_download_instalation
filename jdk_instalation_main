@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Autor: Cezar Augusto Roggia
+# Contato: cezarfw@gmail.com
+# jdk_version: 8 ou 9
+# ext: rpm or tar.gz
+
+jdk_version=${1:-8}
+ext=${2:-rpm}
+ext_gz=${3:-tar.gz}
+clear
+
+echo -e " \033[0;35m Pesquisando versões disponíveis no site da Oracle, aguarde\033[0m\n"
+sleep 5
+
+readonly url="http://www.oracle.com"
+readonly jdk_download_url1="$url/technetwork/java/javase/downloads/index.html"
+readonly jdk_download_url2=$(
+    curl -s $jdk_download_url1 | \
+    egrep -o "\/technetwork\/java/\javase\/downloads\/jdk${jdk_version}-downloads-.+?\.html" | \
+    head -1 | \
+    cut -d '"' -f 1
+)
+[[ -z "$jdk_download_url2" ]] && echo "Could not get jdk download url - $jdk_download_url1" >> /dev/stderr
+
+readonly jdk_download_url3="${url}${jdk_download_url2}"
+readonly jdk_download_url4=$(
+    curl -s $jdk_download_url3 | \
+    egrep -o "http\:\/\/download.oracle\.com\/otn-pub\/java\/jdk\/[8-9](u[0-9]+|\+).*\/jdk-${jdk_version}.*(-|_)linux-(x64|x64_bin).($ext|$ext_gz)"
+)
+
+
+echo -e "Inicializando o download"
+sleep 3
+
+for dl_url in ${jdk_download_url4[@]}; do
+    wget --no-cookies \
+         --no-check-certificate \
+         --header "Cookie: oraclelicense=accept-securebackup-cookie" \
+         -N $dl_url
+done
+clear
+echo -e " \033[0;32m As versões foram baixadas com sucesso \033[0m \n"
+
+
+# Movendo os pacotes para /opt
+
+echo "Movendo os pacotes para o diretório  de instalação\n"
+sleep 3
+if [ -d /opt ]
+then
+        mkdir /opt/java
+        mv jdk-* /opt/java
+        cd /opt/java
+else
+echo -e "Ocorreu um problema com destino dos pacotes, verifique com o administrador do sistema"; exit 1
+
+# Descompactando os pacotes .tar.gz
+
+echo -e "Descompactando os pacotes"
+tar zxvf /opt/java/jdk-* > /dev/null
+grep
+
+echo -e "Pacotes descompactados, iniciando
